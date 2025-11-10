@@ -17,4 +17,19 @@ WS_ID=$(az monitor log-analytics workspace show -g <RG> -n myWorkspace --query i
 
 az containerapp env create -g video_download -n myEnv --location southindia --logs-workspace-id <ws_id>>
 
+#When creating using managed identity
 az containerapp create --name videofunc-app --resource-group video_download --environment managedEnvironment-videodownload-b4d5 --image videoregistry.azurecr.io/videofunc:v1  --registry-server videoregistry.azurecr.io  --registry-username videoregistry --registry-password <container registry pwd> --min-replicas 0 --max-replicas 5 --env-vars AzureWebJobsStorage="<Storage acc conn str>" FUNCTIONS_WORKER_RUNTIME="dotnet-isolated"
+
+
+Envt Variables - Az Pipeline
+
+FUNCTIONS_WORKER_RUNTIME = dotnet-isolated
+AzureWebJobsStorage = DefaultEndpointsProtocol=https;AccountName=girimediastorage;AccountKey=;EndpointSuffix=core.windows.net
+
+
+------------
+
+Build commands:
+docker build -t videofunc:v5 .
+docker tag videofunc:v5 videoregistry.azurecr.io/videofunc:v5
+docker push videoregistry.azurecr.io/videofunc:v5

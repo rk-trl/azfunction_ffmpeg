@@ -43,7 +43,11 @@ public class BlobVideoTranscoder
                 }
 
                 // FFmpeg: transcode to HLS (m3u8 + ts)
-                var ffmpegArgs = $"-y -i \"{inputPath}\" -codec: copy -start_number 0 -hls_time 10 -hls_list_size 0 -f hls \"{Path.Combine(outputDir, "index.m3u8")}\"";
+                
+               var fileName = Path.GetFileNameWithoutExtension(inputPath);
+               var ffmpegArgs = $"-y -i \"{inputPath}\" -c copy -start_number 0 -hls_time 10 -hls_list_size 0 " +
+                                $"-hls_segment_filename \"{Path.Combine(outputDir, fileName)}_%03d.ts\" " +
+                                $"-f hls \"{Path.Combine(outputDir, fileName)}.m3u8\"";
 
                 var psi = new ProcessStartInfo
                 {
@@ -78,7 +82,9 @@ public class BlobVideoTranscoder
                 foreach (var file in Directory.GetFiles(outputDir))
                 {
                     var blobName = Path.GetFileName(file);
-                    var blobClient = outContainer.GetBlobClient(Path.Combine(Path.GetFileNameWithoutExtension(name), blobName));
+                    // use forward slash to create virtual folder named after the source file base
+                    var blobPath = $"{fileName}/{blobName}";
+                    var blobClient = outContainer.GetBlobClient(blobPath);
                     _logger.LogInformation($"Uploading {file} -> outputvideo/{blobClient.Name}");
                     using var fs = File.OpenRead(file);
                     await blobClient.UploadAsync(fs, overwrite: true);
@@ -102,8 +108,6 @@ public class BlobVideoTranscoder
                     throw;
                 }
 
-                // ensure cleanup in case of error
-                // (could be improved with more robust temp dir management)
             }
         }
 }
