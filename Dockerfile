@@ -1,3 +1,16 @@
+# =========================
+# Stage 1: Build the function
+# =========================
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /source
+
+# Copy project files and restore dependencies
+COPY *.csproj .
+RUN dotnet restore
+
+# Copy all source files and publish
+COPY . .
+RUN dotnet publish -c Release -o /app/publish /p:GenerateFunctions=true
 # ------------------------------------------------------------
 # ------------------------------------------------------------
     #Running Stage
@@ -17,8 +30,8 @@ RUN apt-get update && apt-get install -y ffmpeg --no-install-recommends \
 
 # copy function
 WORKDIR /home/site/wwwroot
-COPY . .
-
+#COPY . .
+COPY --from=build /app/publish .
 
 # # # RUN dotnet publish "BlobVideoTranscoder.csproj" -c Release -o /home/site/wwwroot/publish /p:GenerateFunctionMetadata=true
 
@@ -29,4 +42,4 @@ ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
     AzureFunctionsJobHost__Logging__Console__IsEnabled=true
 
 # default entrypoint for dotnet isolated functions
-CMD ["dotnet", "BlobVideoTranscoder.dll"]
+#CMD ["dotnet", "BlobVideoTranscoder.dll"]
